@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.atguigu.jf.console.baseapi.demo.mapper.UserMapper" >
+  <resultMap id="BaseResultMap" type="com.atguigu.jf.console.demo.bean.pojo.User" >
+    <id column="OP_ID" property="opId" jdbcType="DECIMAL" />
+    <result column="OP_NAME" property="opName" jdbcType="VARCHAR" />
+    <result column="OP_CODE" property="opCode" jdbcType="VARCHAR" />
+    <result column="OP_KIND" property="opKind" jdbcType="DECIMAL" />
+    <result column="OP_PIC" property="opPic" jdbcType="VARCHAR" />
+    <result column="MOBILE_NO" property="mobileNo" jdbcType="VARCHAR" />
+    <result column="EMAIL_ADRESS" property="emailAdress" jdbcType="VARCHAR" />
+    <result column="LOGIN_CODE" property="loginCode" jdbcType="VARCHAR" />
+    <result column="LOGIN_PASSWD" property="loginPasswd" jdbcType="VARCHAR" />
+    <result column="LOCK_FLAG" property="lockFlag" jdbcType="DECIMAL" />
+    <result column="DATA_STATE" property="dataState" jdbcType="DECIMAL" />
+    <result column="CREATOR" property="creator" jdbcType="DECIMAL" />
+    <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="MODIFIER" property="modifier" jdbcType="DECIMAL" />
+    <result column="MODIFY_DATE" property="modifyDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from sys_op
+    where OP_ID = #{opId,jdbcType=DECIMAL}
+  </delete>
+  <insert id="insert" parameterType="com.atguigu.jf.console.demo.bean.pojo.User" >
+    insert into sys_op (OP_ID, OP_NAME, OP_CODE, 
+      OP_KIND, OP_PIC, MOBILE_NO, 
+      EMAIL_ADRESS, LOGIN_CODE, LOGIN_PASSWD, 
+      LOCK_FLAG, DATA_STATE, CREATOR, 
+      CREATE_DATE, MODIFIER, MODIFY_DATE
+      )
+    values (#{opId,jdbcType=DECIMAL}, #{opName,jdbcType=VARCHAR}, #{opCode,jdbcType=VARCHAR}, 
+      #{opKind,jdbcType=DECIMAL}, #{opPic,jdbcType=VARCHAR}, #{mobileNo,jdbcType=VARCHAR}, 
+      #{emailAdress,jdbcType=VARCHAR}, #{loginCode,jdbcType=VARCHAR}, #{loginPasswd,jdbcType=VARCHAR}, 
+      #{lockFlag,jdbcType=DECIMAL}, #{dataState,jdbcType=DECIMAL}, #{creator,jdbcType=DECIMAL}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{modifier,jdbcType=DECIMAL}, #{modifyDate,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.atguigu.jf.console.demo.bean.pojo.User" >
+    update sys_op
+    set OP_NAME = #{opName,jdbcType=VARCHAR},
+      OP_CODE = #{opCode,jdbcType=VARCHAR},
+      OP_KIND = #{opKind,jdbcType=DECIMAL},
+      OP_PIC = #{opPic,jdbcType=VARCHAR},
+      MOBILE_NO = #{mobileNo,jdbcType=VARCHAR},
+      EMAIL_ADRESS = #{emailAdress,jdbcType=VARCHAR},
+      LOGIN_CODE = #{loginCode,jdbcType=VARCHAR},
+      LOGIN_PASSWD = #{loginPasswd,jdbcType=VARCHAR},
+      LOCK_FLAG = #{lockFlag,jdbcType=DECIMAL},
+      DATA_STATE = #{dataState,jdbcType=DECIMAL},
+      CREATOR = #{creator,jdbcType=DECIMAL},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      MODIFIER = #{modifier,jdbcType=DECIMAL},
+      MODIFY_DATE = #{modifyDate,jdbcType=TIMESTAMP}
+    where OP_ID = #{opId,jdbcType=DECIMAL}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select OP_ID, OP_NAME, OP_CODE, OP_KIND, OP_PIC, MOBILE_NO, EMAIL_ADRESS, LOGIN_CODE, 
+    LOGIN_PASSWD, LOCK_FLAG, DATA_STATE, CREATOR, CREATE_DATE, MODIFIER, MODIFY_DATE
+    from sys_op
+    where OP_ID = #{opId,jdbcType=DECIMAL}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select OP_ID, OP_NAME, OP_CODE, OP_KIND, OP_PIC, MOBILE_NO, EMAIL_ADRESS, LOGIN_CODE, 
+    LOGIN_PASSWD, LOCK_FLAG, DATA_STATE, CREATOR, CREATE_DATE, MODIFIER, MODIFY_DATE
+    from sys_op
+  </select>
+  
+  <select id="selectByNameAndPwd" parameterType="com.atguigu.jf.console.demo.bean.pojo.User" resultMap="BaseResultMap">
+  select * from sys_op
+  
+  where LOGIN_CODE=#{user.loginCode} and LOGIN_PASSWD=#{user.loginPasswd}
+  
+  </select>
+  
+</mapper>

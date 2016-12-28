@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<!-- 包扫描 -->
+	<context:component-scan base-package="com.atguigu.jf.console.*.service*">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<!-- 引用外部属性文件 -->
+	<context:property-placeholder location="classpath:jdbc.propertites" />
+	<!-- 连接池 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+		<property name="username" value="${jdbc.user}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="url" value="${jdbc.url}"></property>
+	</bean>
+	<!-- 整合mybatis sqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="mapperLocations"
+			value="classpath:com/atguigu/jf/console/baseapi/*/mapper/*.xml"></property>
+	</bean>
+	<!-- 扫描Mapper映射配置 -->
+	<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+		<property name="basePackage" value="com.atguigu.jf.console.baseapi.*"></property>
+	</bean>
+
+	<!-- 事务管理 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<tx:advice id="transactionAdivce" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="append*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="modify*" propagation="REQUIRED" />
+			<tx:method name="edit*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="remove*" propagation="REQUIRED" />
+			<tx:method name="repair" propagation="REQUIRED" />
+			<tx:method name="delAndRepair" propagation="REQUIRED" />
+
+			<tx:method name="get*" propagation="SUPPORTS" />
+			<tx:method name="find*" propagation="SUPPORTS" />
+			<tx:method name="load*" propagation="SUPPORTS" />
+			<tx:method name="search*" propagation="SUPPORTS" />
+			<tx:method name="select*" propagation="SUPPORTS" />
+
+			<tx:method name="*" propagation="SUPPORTS" />
+		</tx:attributes>
+
+	</tx:advice>
+	
+	<!-- 事务的切面 -->
+	<aop:config>
+		<aop:pointcut id="transactionPointcut" expression="execution (* com.atguigu.jf.console.*.service..*Impl.*(..))"/>
+		<aop:advisor advice-ref="transactionAdivce" pointcut-ref="transactionPointcut"/>
+	</aop:config>
+	
+	
+	<!-- 集成quartz
+		使用 MethodInvokingJobDetailFactoryBean，仅需要定义目标类和目标方法即可
+	 -->
+	<bean id="triggerJob" class="com.atguigu.jf.console.trigger.job.TriggerJob"></bean>
+	<bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	    <property name="targetObject" ref="triggerJob" />
+	    <property name="targetMethod" value="doIt" />
+	</bean>
+	<bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<!-- 引用上面定义的jobDetail -->
+	    <property name="jobDetail" ref="jobDetail" />
+	    <!-- 每隔5秒钟执行一次  秒 分 时 日期 月 星期 年份 *  -->
+	    <property name="cronExpression" value="0 * * 15 * ?" />
+	</bean>
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+	    <property name="triggers">
+	        <list>
+	            <ref bean="cronTrigger" />
+	        </list>
+	    </property>
+	</bean>
+	
+	
+	<!-- =========================================================
+         	开始重点的配置
+         Shiro Core Components - Not Spring Specific
+         ========================================================= -->
+    <!-- Shiro's main business-tier object for web-enabled applications
+         (use DefaultSecurityManager instead when there is no web environment)-->
+    <!-- 配置安全管理器 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+    	<!-- 缓存管理器 -->
+        <property name="cacheManager" ref="cacheManager"/>
+        <!-- realm用来访问安全数据 -->
+        <property name="realm" ref="myRealm"/>
+    </bean>
+
+    <bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <!-- 采用ecache配置文件的方式配置缓存管理器 -->
+        <property name="cacheManagerConfigFile" value="classpath:ehcache.xml"/>
+    </bean>
+
+    <!-- 配置Realm -->
+    <bean id="myRealm" class="com.atguigu.jf.console.shiro.realm.MyRealm"></bean>
+
+    <!-- =========================================================
+         	开始了整合spring集成shiro
+         	 Shiro Spring-specific integration
+         ========================================================= -->
+    <!-- Post processor that automatically invokes init() and destroy() methods
+         for Spring-configured Shiro objects so you don't have to
+         1) specify an init-method and destroy-method attributes for every bean
+            definition and
+         2) even know which Shiro objects require these methods to be
+            called. -->
+    <!-- 配置管理spring中shiro对象的生命周期 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+    <!-- Enable Shiro Annotations for Spring-configured beans.  Only run after
+         the lifecycleBeanProcessor has run: -->
+         
+    <!-- 开启shiro的注解
+    	注意：只有在lifecycleBeanProcessor开启后才能使注解生效
+     -->  
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor"/>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+
+    <!-- Define the Shiro Filter here (as a FactoryBean) instead of directly in web.xml -
+         web.xml uses the DelegatingFilterProxy to access this bean.  This allows us
+         to wire things with more control as well utilize nice Spring things such as
+         PropertiesPlaceholderConfigurer and abstract beans or anything else we might need: -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+    	<!-- 引用安全管理器 -->
+        <property name="securityManager" ref="securityManager"/>
+        <!-- 用来登录的链接 -->
+        <property name="loginUrl" value="/login.jsp"/>
+        <!-- <property name="successUrl" value="/s/index"/> -->
+        <!-- 如果没有权限，将跳转的连接 -->
+        <property name="unauthorizedUrl" value="/failed.jsp"/>
+        <!-- The 'filters' property is not necessary since any declared javax.servlet.Filter bean
+             defined will be automatically acquired and available via its beanName in chain
+             definitions, but you can perform overrides or parent/child consolidated configuration
+             here if you like: -->
+        <!-- <property name="filters">
+            <util:map>
+                <entry key="aName" value-ref="someFilterPojo"/>
+            </util:map>
+        </property> -->
+        <!-- shiro的资源和权限的映射
+        	 anon : 可以匿名访问
+        	 authc : 需要进行权限验证
+         -->
+        <property name="filterChainDefinitions">
+            <value>
+	            /logincontroller/getVerifyCodeImage =anon 
+	            /logincontroller/login =anon 
+                # everything requires authentication:
+                /** = authc
+            </value>
+        </property>
+    </bean>
+	
+	
+
+</beans>
